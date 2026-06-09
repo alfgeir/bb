@@ -1,0 +1,435 @@
+<html>
+
+<head>
+  <meta name="viewport" content="initial-scale=1">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Cinzel:b">
+  <link rel="stylesheet" href="https://fonts.cdnfonts.com/css/freeuniversal">
+  <link rel="stylesheet" href="hex.css">
+  <style>
+    @media print {
+      @page {
+        size: a4;
+      }
+
+      body {
+        margin: 0;
+      }
+
+      body>span {
+        display: none;
+      }
+
+      body>div {
+        padding:            4px 0;
+        top:                3px;
+        border-right-color: transparent!important;
+        border-left-color:  transparent!important;
+      }
+      body>div:nth-child(4n+1) { border-top-color:    transparent!important; }
+      body>div:nth-child(4n+0) { border-bottom-color: transparent!important; }
+
+      #list {
+        display: none!important;
+      }
+
+      .printFix {
+        visibility: hidden;
+      }
+      .printFix:not(:nth-child(4n+2)) {
+        display: none!important;
+      }
+    }
+    @media not print {
+      .printFix {
+        display: none!important;
+      }
+    }
+
+    body {
+      min-width:  fit-content;
+      background: #321;
+      font:       15px/18px FreeUniversal;
+      color:      #ccc;
+    }
+
+    [data-hex] {
+      display:           inline-block;
+      background-size:   contain;
+      background-repeat: no-repeat;
+    }
+
+    #list {
+      display:    none;
+      position:   fixed;
+      box-sizing: border-box;
+      padding:    1em;
+      left:       0;
+      top:        0;
+      width:      100%;
+      height:     100%;
+      background: #000d;
+      overflow-y: auto;
+      z-index:    2;
+    }
+
+    label:not(:last-of-type) {
+      margin-right: 2em;
+      cursor:       pointer;
+    }
+    @media screen and (max-width:1080px) {
+      label {
+        zoom: 1.5;
+      }
+    }
+
+    @media screen and (max-width:1080px) {
+      .collapseAll {
+        position: relative;
+        top:      -2px;
+      }
+      .collapse {
+        position: absolute;
+        right:    0;
+        top:      -2px;
+        cursor:   pointer;
+      }
+      .collapse::after    { content: "[−]"; }
+      .collapse.ed::after { content: "[+]"; }
+
+      div:has(.collapse.ed) {
+        padding:  0;
+        height:   84px;
+        overflow: hidden;
+      }
+      div:has(.collapse.ed) .pouch {
+        display:  none;
+      }
+    }
+    @media print, not (max-width:1080px) {
+      .collapseAll,
+      .collapse {
+        display:  none;
+      }
+    }
+
+    .menu {
+      display:     inline-block;
+      position:    absolute;
+      margin:      .25em;
+      cursor:      default;
+      z-index:     1;
+    }
+    .menu :nth-child(2) {
+      margin-top:  .1em;
+    }
+    .menu :not(:first-child) {
+      padding:     .5em;
+      background:  #000d;
+      font-size:   1.2em;
+      white-space: nowrap;
+    }
+    .menu:not(:hover) :not(:first-child)        { display:    none;  }
+    .menu :not(:first-child):hover              { background: green; }
+    .menu:has(.persist.yes) :first-child::after { content:    " 📌"; }
+    .menu .persist::before                      { content:    "☐";   }
+    .menu .persist.yes::before                  { content:    "☑";   }
+    @media screen and (max-width:1080px) {
+      .menu {
+        zoom: 1.25;
+      }
+    }
+
+    .traitBox {
+      position: absolute;
+      margin:   18px 0 0 250px;
+    }
+    .traitBox>* {
+      width:    46px;
+      height:   46px;
+    }
+    @media print, not (max-width:1080px) {
+      .traitBox {
+        width:       254px;
+        height:      46px;
+        white-space: nowrap;
+        overflow:    hidden;
+      }
+      .traitBox:hover {
+        height:      auto;
+        background:  #000d;
+        white-space: normal;
+      }
+      .traitBox:not(:hover)>:last-child {
+        display:     none;
+      }
+    }
+
+    .talent {
+      display:       inline-block;
+      margin-left:   .2em;
+      padding:       0 .65em;
+      width:         .5em;
+      height:        19px;
+      border-radius: 10px;
+      color:         #ccc8;
+      cursor:        default;
+    }
+    .talent:hover:not(.selected) {
+      background:    #888;
+      color:         #000;
+    }
+    .talent.selected {
+      background:    #da2;
+      color:         #000;
+    }
+
+    .perk {
+      width:         46px;
+      height:        46px;
+      border-radius: 46px;
+      filter:        grayscale(1) opacity(.5);
+    }
+    .perk:hover:not(.selected) { filter: grayscale(1); }
+    .perk.selected             { filter: drop-shadow(0 1px 1px #e8a81e) drop-shadow(0 0 #e8a81e80); }
+    div:has([title="Bags and Belts"]:not(.selected)) .pouch:nth-of-type(10),
+    div:has([title="Bags and Belts"]:not(.selected)) .pouch:nth-of-type(11) { opacity: .33; }
+
+    .pouch {
+      position:            absolute;
+      width:               60px;
+      height:              60px;
+      outline:             1px solid #000;
+      border:              1px solid #8888;
+      border-radius:       3px;
+      background-color:    #0004;
+    }
+    .pouch:hover {
+      background-color:    #fff4;
+    }
+    .pouch[data-hex="C6792058"], /* Battle Standard */
+    .pouch[data-type="auxiliary"] {
+      background-size:     cover;
+    }
+    .pouch[data-slot="body"] {
+      background-size:     cover;
+      background-position: 0 20%;
+    }
+    [data-type^="named"]::after {
+      display:             block;
+      margin:              -1px 1px;
+      width:               14px;
+      height:              14px;
+      background:          url(assets/icon-special.png);
+      background-size:     cover;
+      content:             "";
+    }
+
+    @media screen and (max-width:1080px) {
+      div:has(.menu) {
+        padding-bottom: 335px;
+        width:          560px!important;
+      }
+      .menu+div {
+        margin:         370px 0 0 4px!important;
+      }
+      :not(#list)>.pouch:nth-of-type(1),
+      :not(#list)>.pouch:nth-of-type(2) { margin-top: 360px; }
+      :not(#list)>.pouch { margin-right: -8px; }
+    }
+  </style>
+  <script src="map.js"></script>
+  <script src="map_.js"></script>
+  <script src="parse.js"></script>
+  <script src="draw.js"></script>
+</head>
+
+<body>
+
+<div id="list"></div>
+<script>
+  function setImage(_,k,v) {
+    _.dataset.hex     = k;
+    _.dataset.slot    = v.slot;
+    _.dataset.type    = v.type;
+    _.dataset.icon    = v.icon || 1;
+    _.dataset.iconSet = v.iconSet;
+    _.dataset.house   = 8;
+    _.title           = v.name;
+    if (v.name && ['helmet','body','attachment'].includes(v.slot)) _.title += '\n' + v.durability + ' / ' + v.fatigue;
+    if (v.type == 'namedHelmet') _.title += '\n' + ~~(v.d * 1.25) + ' / ' + Math.min(-4, v.fatigue + 3);
+    if (v.type == 'namedArmor')  _.title += '\n' + ~~(v.d * 1.25) + ' / ' + Math.min(-8, v.fatigue + 6);
+  }
+
+  function select(_, highlight, onclick) {
+    var b = _ => list.append(document.createElement('br'));
+    var t = _ => { list.append(_); b(); };
+    var c = (k,v) => {
+      var _ = document.createElement('span');
+      _.classList.add('pouch');
+      _.style.position        = 'relative';
+      _.style.backgroundColor = (k == highlight) && '#da2';
+      _.onclick               = e => onclick(_);
+      setImage(_,k,v);
+      list.append(_);
+    };
+
+    list.innerHTML = '';
+    _.forEach((s,i) => {
+      if (!i && s != 'background') c('',map.get('00000000'));
+
+      var armors = [];
+      var buffer = [];
+      for (var [k,v] of map) {
+        if (k == '00000000') continue;
+        if (k == '259DB6AC') continue; // named Lindwurm Shield
+        if (![v.slot,v.type].includes(s)) continue;
+
+        var _ = {
+          '1BB3149D': 'Purchasable', // gladiator attachment
+          'B3EAA613': 'Two-Handed',  // barbarians
+          '426CA1FD': 'Two-Handed',  // named ranged
+        }[k];
+        if (_ != null) {
+          b(); b(); t(_);
+          while (buffer.length) list.append(buffer.shift(_));
+        }
+
+        var _ = {
+          '5EEFDF76': '',             // Addict
+          '1BB3149D': 'Pre-attached', // gladiator attachment
+          'B3EAA613': 'Barbarians',
+          'A1CE9CC3': 'City States',
+          'FCF7A3FE': 'Greenskin',
+          'D040B3C1': 'Ancient Dead',
+          '9CB0C3EC': 'Ranged',
+          'A82D20D2': 'One-Handed',
+          '426CA1FD': 'Ranged',       // named
+          '7410DA79': '',             // Lindwurm Shield
+          '170BAB89': '',             // Acid Flask
+        }[k];
+        if (_ != null) {
+          b(); b();
+          if (_) t(_);
+        }
+
+        c(k,v);
+        if (['helmet','body'].includes(s)) {
+          var _ = ~~(-v.fatigue / 3);
+          armors[_] = armors[_] || [];
+          armors[_].push(list.lastChild);
+          list.lastChild.f = v.fatigue;
+        } else if (
+          [
+            // lowborn
+            '513CA7C5','24623B29','4C95ED0E','9E3EE827','25863EEB','6C9CE698','2BEEF2DE','7B9A3CF7',
+            'F6D131D4','0746329A','C6DD9695','FA656BC3','F1D086E6','24ACB273','EA19650F','3B540890',
+            '2D27199D','AAB09341','EAD11AC4','A8E56738','C16724D1','545302CF','872280DE','9AA50C11',
+            '7CEF5D75','E09EB018','6F7C3275','F8B44DE8','E766D491','15D99E2B','F83BDAA3','DFABA699',
+            'DBE74EB4','77CC2A7F','48217ABD','71888843',
+
+            // animal
+            '504A794E','99C519AE','0EADB11B','07197EEF','D1552B2D','BDD56DA5','6A96C2B6','FBFCEF56',
+
+            // 2h
+            '6CDC5B88','F645DE8F','11FE31EC','BA203F7C','8AE27C83','6DC232AB','55510B91','28F70D26',
+            'C6792058','1D4A54A0','56EA5919','116D93E0','1E62DD59','B68ED279','C63CD8DE','F361A65D',
+            'CA64D63F','573A189E','8C763FFC','5AF69B8F','FE4E8776','E05EABE8',
+
+            // 2h - named
+            '01BE0537','2DD93D54','E6F65735','218D1BA0','302EF564','0EDE702A','C6A38A4F','E40F0AAD',
+            '8F8C8D0D','C4E0D061','9C530563','0A14D856','E1A952E3','5A71D45B','EE75A45C','41806D40',
+            'BE031BE0','EA4BBCEE','7DC2527F','3886F7D9','FAFE6F1A','F033EB20','5BB80F84','4EE39971',
+
+            // attachment - purchasable
+            'BD3B9C99','DDAAA63D','6A59C084','DB86B709','82F72108','B7B0DFF0','679155D7','9D6DEC64',
+          ].includes(k)
+        )
+          buffer.push(list.lastChild);
+      }
+
+      armors.forEach((_,i) => {
+        if (i) t((i * -3) + ' ... ' + (i * -3 - 2));
+        _.sort((a,b) => b.f - a.f).forEach(_ => list.append(_));
+        b(); b();
+      });
+
+      b(); b();
+      if (s == 'background') {
+        t('Lowborn');
+        while (buffer.length) list.append(buffer.shift(_));
+      } else if (s == 'trinket') {
+        while (buffer.length) list.append(buffer.shift(_));
+      }
+    });
+
+    list.onclick = e => {
+      document.body.style.overflow = e ? '' : 'hidden';
+      list.style.display           = e ? '' : 'block';
+    };
+    list.onclick();
+  }
+</script>
+
+<span>
+  <label>
+    <a style="text-decoration:none;color:inherit" target="_blank" href="../support.html">Support</a>
+  </label>
+  <label>
+    <input type="file" style="display:none" onchange="read(this.files[0]); this.value = ''">
+    Choose File
+  </label>
+  <label onclick="hire()">
+    Hire
+  </label>
+  <label onclick="share()">
+    Share
+  </label>
+  <label class="collapseAll" onclick="document.querySelectorAll('.collapse:not(.ed)').forEach(_ => _.click())">
+    [−]
+  </label>
+  <br>
+</span>
+<script>
+  function read(_) {
+    var r = new FileReader();
+    r.onload = _ => {
+      var l = document.body.lastChild;
+      draw(parse(r.result));
+      l.nextElementSibling.scrollIntoView({behavior:'smooth'});
+    };
+    r.readAsArrayBuffer(_);
+  }
+
+  function hire() {
+    var _ = prompt('Link?');
+    if (_ == null) return;
+
+    try {
+      var l = document.body.lastChild;
+      draw(fromString(_));
+      l.nextElementSibling.scrollIntoView({behavior:'smooth'});
+    } catch(e) {
+      alert(e);
+    }
+  }
+
+  function share() {
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob(
+      [ location.origin + location.pathname + '?hire=' + toString(Array.from(document.querySelectorAll('body>div')).filter(_ => _.b).map(_ => _.b)) ],
+      {type:'application/octet-stream'}));
+
+    a.setAttribute('download', location.hostname + location.pathname.replaceAll('/',' ') + 'share.txt');
+    a.click();
+  }
+
+  setTimeout(_ => {
+    try {
+      draw(fromString(new URLSearchParams(location.search).get('hire')));
+      history.replaceState(null,'','.');
+    } catch(e) {}
+    try {
+      draw(fromString(localStorage.getItem('brothers') || null), 1);
+    } catch(e) {}
+  });
+</script>
